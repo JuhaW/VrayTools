@@ -56,9 +56,11 @@ def node_get_output(mntree):
 def vray_clay_render(b_clay,b_material_exclude):
 	
 	materials = {}
+	Clay = "Clay"
+	Invisible = "Invisible"
 	
 	if b_clay:
-		Clay = "Clay"
+		
 		#find "Clay" material, create it if not exist, delete Clay nodetree nodes if exists
 		mat = bpy.data.materials.get(Clay)
 		if mat == None:
@@ -84,11 +86,39 @@ def vray_clay_render(b_clay,b_material_exclude):
 		node_1.inputs.get('Diffuse').value = (bpy.context.scene.vray_clay_color)
 		#set material overwrite on
 		#bpy.context.scene.vray.SettingsOptions.mtl_override_on = True
-		bpy.context.scene.vray.SettingsOptions.mtl_override = Clay
+		#bpy.context.scene.vray.SettingsOptions.mtl_override = Clay
 
 	if b_material_exclude:
 		
+		#find "Invisible" material, create it if not exist, delete Clay nodetree nodes if exists
+		mat = bpy.data.materials.get(Invisible)
+		if mat == None:
+			mat = bpy.data.materials.new(Invisible)
+
+		ntree = bpy.data.node_groups.get(Invisible)
+		if ntree:
+			ntree.nodes.clear()
+		else:	
+			ntree = bpy.data.node_groups.new(Invisible, 'VRayNodeTreeMaterial')
+		mat.vray.ntree = ntree
+		print ("Invisible material created")
+		print ("material:", mat)
+
+		#create output node and standard material node
+		node_out = node_create(ntree, 'VRayNodeOutputMaterial')
+		node_1 = node_create(ntree, 'VRayNodeMetaStandardMaterial')
+		#set node links
+		node_1.location = (node_out.location.x -200,0)
+		ntree.links.new(node_out.inputs[0], node_1.outputs[0])
+		#set diffuse color
+		#node_1.inputs.get('Diffuse').value = (.214,.214,.214)
+		node_1.inputs.get('Opacity').value = 0
+		#clip mode
+		node_1.BRDFVRayMtl.opacity_mode = '1'
 		
+		
+		
+	if b_clay or b_material_exclude:
 		
 		objs = [o for o in bpy.context.scene.objects if o.type in ('MESH', 'CURVE','SURFACE','META','FONT')]
 		print ("objs:", objs)
@@ -115,19 +145,23 @@ def vray_clay_render(b_clay,b_material_exclude):
 	bpy.ops.render.render()
 	
 	if b_clay:
-		bpy.context.scene.vray.SettingsOptions.mtl_override_on = False
+		#bpy.context.scene.vray.SettingsOptions.mtl_override_on = False
+		bpy.data.materials.remove(bpy.data.materials[Clay], do_unlink = True)
+		bpy.data.node_groups.remove(bpy.data.node_groups[Clay], do_unlink = True)
+		
 
 	if b_material_exclude:
-		#restore materials
-		print ("after render:")
-		for key in materials.keys():
-			for i in materials[key]:
-				bpy.context.scene.objects[key].data.materials[i[0]] = bpy.data.materials[i[1]]
-				
-			
-			
-
 		
+		bpy.data.materials.remove(bpy.data.materials[Invisible], do_unlink = True)
+		bpy.data.node_groups.remove(bpy.data.node_groups[Invisible], do_unlink = True)
+		
+	#restore materials
+	print ("after render:")
+	for key in materials.keys():
+		for i in materials[key]:
+			bpy.context.scene.objects[key].data.materials[i[0]] = bpy.data.materials[i[1]]
+				
+
 		
 	#'VRayNodeTreeMaterial'
 	#'VRayNodeMetaStandardMaterial'
