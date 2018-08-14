@@ -20,10 +20,12 @@ class VrayDeleteUnusedMaterials(bpy.types.Operator):
 		if context.scene.materials:
 			#delete unused materials
 			
-			mat_used = list(set([m for o in bpy.data.objects if hasattr(o.data,'materials') for m in o.data.materials]))
-			mat_unused = list(set(mat_used) ^ set(bpy.data.materials))
+			#mat_used = list(set([m for o in bpy.data.objects if hasattr(o.data,'materials') for m in o.data.materials]))
+			#mat_unused = list(set(mat_used) ^ set(bpy.data.materials))
+			mat_unused = [i for i in bpy.data.materials if i.users == 0]
+			
 			print ("mat unused:", mat_unused)
-			print ("len mat:", len(mat_unused))
+			
 			for m in mat_unused:
 				bpy.data.materials.remove(m, do_unlink = True)
 				matcnt += 1
