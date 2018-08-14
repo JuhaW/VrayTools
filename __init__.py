@@ -240,7 +240,7 @@ class Vray_Shadow_Catcher_Select(bpy.types.Operator):
 		
 	
 class Vray_Mat_Exclude_Add(bpy.types.Operator):
-	"""Set selected objects shadow catcher"""
+	"""Add material to exclude list"""
 	bl_idname = "vray.mat_exclude_add"
 	bl_label = "Add material to exclude list"
 	#bl_options = {'REGISTER', 'UNDO'}	# enable undo for the operator.
@@ -256,7 +256,7 @@ class Vray_Mat_Exclude_Add(bpy.types.Operator):
 		return {'FINISHED'}
 	
 class Vray_Mat_Exclude_Delete(bpy.types.Operator):
-	"""Set selected objects shadow catcher"""
+	"""This material is not part of render"""
 	bl_idname = "vray.mat_exclude_delete"
 	bl_label = "Remove material from exclude list"
 	#bl_options = {'REGISTER', 'UNDO'}	# enable undo for the operator.
