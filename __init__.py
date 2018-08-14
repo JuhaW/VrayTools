@@ -73,8 +73,8 @@ def vray_clay_render(b_clay,b_material_exclude):
 		else:	
 			ntree = bpy.data.node_groups.new(Clay, 'VRayNodeTreeMaterial')
 		mat.vray.ntree = ntree
-		print ("new material created")
-		print ("material:", mat)
+		#print ("new material created")
+		#print ("material:", mat)
 
 		#create output node and standard material node
 		node_out = node_create(ntree, 'VRayNodeOutputMaterial')
@@ -102,8 +102,8 @@ def vray_clay_render(b_clay,b_material_exclude):
 		else:	
 			ntree = bpy.data.node_groups.new(Invisible, 'VRayNodeTreeMaterial')
 		mat.vray.ntree = ntree
-		print ("Invisible material created")
-		print ("material:", mat)
+		#print ("Invisible material created")
+		#print ("material:", mat)
 
 		#create output node and standard material node
 		node_out = node_create(ntree, 'VRayNodeOutputMaterial')
@@ -122,9 +122,9 @@ def vray_clay_render(b_clay,b_material_exclude):
 	if b_clay or b_material_exclude:
 		
 		objs = [o for o in bpy.context.scene.objects if o.type in ('MESH', 'CURVE','SURFACE','META','FONT')]
-		print ("objs:", objs)
-		print ()
-		print ("Vray matlist:", Vray_MatList)
+		#print ("objs:", objs)
+		#print ()
+		#print ("Vray matlist:", Vray_MatList)
 		
 		for o in objs:
 			lst = []
@@ -140,13 +140,13 @@ def vray_clay_render(b_clay,b_material_exclude):
 			if lst:
 				materials[o.name] = lst
 			
-		print ("excluded materials:", materials)
+		#print ("excluded materials:", materials)
 		
 	
 	bpy.ops.render.render()
 	
 	#restore materials
-	print ("after render:")
+	#print ("after render:")
 	for key in materials.keys():
 		for i in materials[key]:
 			bpy.context.scene.objects[key].data.materials[i[0]] = bpy.data.materials[i[1]]
