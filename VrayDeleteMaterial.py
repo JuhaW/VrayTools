@@ -113,7 +113,7 @@ def Vray_Materials_Delete(self, context):
 	row.prop(context.scene,"world_ntree", text = "World")
 	
 def register():
-	print ("register VrayDeleteMaterial")
+	#print ("register VrayDeleteMaterial")
 	
 	#bpy.utils.register_module(__name__)
 	#bpy.utils.register_class(VrayDeleteUnusedMaterials)
