@@ -53,26 +53,56 @@ def node_get_output(mntree):
 	node, =[i for i in mntree.nodes if i.bl_idname == 'VRayNodeOutputMaterial']
 	return node
 
+def store_materials():
+	materials = {}
+	
+	objs = [o for o in bpy.context.scene.objects if o.type in ('MESH', 'CURVE','SURFACE','META','FONT')]
+		
+	#store materials
+	for o in objs:
+		lst = []
+		#if object has no materials, create one
+		mats = [i for i in o.data.materials if i is not None]
+		if not mats:
+			o.data.materials.clear()
+			mat = bpy.data.materials.new("Missing material")
+			o.data.materials.append(mat)
+			print ("===============")
+			print ("new material created")
+			print ("===============")
+			input ()
+			
+		for i, slot in enumerate(o.material_slots):
+			if slot.material:
+				lst.append([i, slot.material.name, slot.link])
+			else:
+				lst.append([i, None, slot.link])
+		materials[o.name] = lst
+
+	return objs, materials
 
 def vray_clay_render(b_clay,b_material_exclude):
 	
-	materials = {}
+	
 	Clay = "Clay"
 	Invisible = "Invisible"
 	
 	if b_clay:
 		
 		#find "Clay" material, create it if not exist, delete Clay nodetree nodes if exists
-		mat = bpy.data.materials.get(Clay)
-		if mat == None:
-			mat = bpy.data.materials.new(Clay)
+		#mat = bpy.data.materials.get(Clay)
+		#if mat == None:
+		clay_mat = bpy.data.materials.new(Clay)
 
-		ntree = bpy.data.node_groups.get(Clay)
+		ntree = bpy.data.node_groups.get(clay_mat.name)
 		if ntree:
 			ntree.nodes.clear()
 		else:	
-			ntree = bpy.data.node_groups.new(Clay, 'VRayNodeTreeMaterial')
-		mat.vray.ntree = ntree
+			ntree = bpy.data.node_groups.new(clay_mat.name, 'VRayNodeTreeMaterial')
+		clay_mat.vray.ntree = ntree
+		print()
+		print (clay_mat.name, ntree.name)
+		print()
 		#print ("new material created")
 		#print ("material:", mat)
 
@@ -88,7 +118,8 @@ def vray_clay_render(b_clay,b_material_exclude):
 		#set material overwrite on
 		#bpy.context.scene.vray.SettingsOptions.mtl_override_on = True
 		#bpy.context.scene.vray.SettingsOptions.mtl_override = Clay
-
+		clay_ntree = ntree
+		
 	if b_material_exclude:
 		
 		#find "Invisible" material, create it if not exist, delete Clay nodetree nodes if exists
@@ -118,43 +149,58 @@ def vray_clay_render(b_clay,b_material_exclude):
 		node_1.BRDFVRayMtl.opacity_mode = '1'
 		
 		
-		
+	objs, materials = store_materials()
+	#print ("stored materials", materials)
+	#print ("Objekteja:", len(objs))
+	#print ("Materiaaleja:", len(materials))
+	#print ("Materials from subroutine:", materials)
+	
 	if b_clay or b_material_exclude:
 		
-		objs = [o for o in bpy.context.scene.objects if o.type in ('MESH', 'CURVE','SURFACE','META','FONT')]
-		#print ("objs:", objs)
-		#print ()
-		#print ("Vray matlist:", Vray_MatList)
 		
-		for o in objs:
-			lst = []
-			for i, mat in enumerate(o.data.materials):
-				if mat and mat.name in Vray_MatList and b_material_exclude:
-					lst.append([i, mat.name])
-					#replace object materials
-					o.data.materials[i] = bpy.data.materials['Invisible']
-				elif mat and b_clay:
-					lst.append([i, mat.name])
-					#replace object materials
-					o.data.materials[i] = bpy.data.materials['Clay']
-			if lst:
-				materials[o.name] = lst
+		#objectname, 0 slotindex, 1 slot material name, 2 slot link
+		for o_name in materials:
 			
+			for i in materials[o_name]:
+				
+				mat_name = i[1]
+				if mat_name in Vray_MatList and b_material_exclude:
+					#replace object materials
+					#o.data.materials[i] = bpy.data.materials['Invisible']
+					bpy.context.scene.objects[o_name].material_slots[i[0]].link = i[2]
+					bpy.context.scene.objects[o_name].material_slots[i[0]].material = bpy.data.materials[Invisible]
+				elif b_clay:
+					#replace object materials
+					bpy.context.scene.objects[o_name].material_slots[i[0]].link = i[2]
+					bpy.context.scene.objects[o_name].material_slots[i[0]].material = clay_mat
+			
+		#print("========================")	
 		#print ("excluded materials:", materials)
-		
+		#print("========================")
+		#input ("enter to continue...")
 	
 	bpy.ops.render.render()
 	
 	#restore materials
-	#print ("after render:")
-	for key in materials.keys():
-		for i in materials[key]:
-			bpy.context.scene.objects[key].data.materials[i[0]] = bpy.data.materials[i[1]]
+	if b_clay or b_material_exclude:
+
+		for o_name in materials.keys():
+			for i in materials[o_name]:
+				#input("Press Enter to continue...")
+				print ("o_name:", o_name)
+				print (":", i)
+				bpy.context.scene.objects[o_name].material_slots[i[0]].link = i[2]
+				if i[1] is not None:
+					mat = bpy.data.materials.get(i[1])
+				else:
+					mat = None
+				bpy.context.scene.objects[o_name].material_slots[i[0]].material = mat
+				
 			
 	if b_clay:
 		#bpy.context.scene.vray.SettingsOptions.mtl_override_on = False
-		bpy.data.materials.remove(bpy.data.materials[Clay], do_unlink = True)
-		bpy.data.node_groups.remove(bpy.data.node_groups[Clay], do_unlink = True)
+		bpy.data.materials.remove(bpy.data.materials[clay_mat.name], do_unlink = True)
+		bpy.data.node_groups.remove(bpy.data.node_groups[clay_ntree.name], do_unlink = True)
 		
 
 	if b_material_exclude:
